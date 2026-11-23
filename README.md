@@ -1,23 +1,33 @@
 # DevOps mini project — visitor counter with Grafana monitoring
 
+[![CI](https://github.com/savinbabup/devops-mini-project/actions/workflows/ci.yml/badge.svg)](https://github.com/savinbabup/devops-mini-project/actions/workflows/ci.yml)
+
 **By Savin Babu P — B.Tech Computer Science and Technology (DevOps), Presidency University, Bangalore.**
 
-A visitor-counter website running in Docker: every visit is saved in PostgreSQL,
+A visitor-counter website with a guestbook, running in Docker: every visit is saved in PostgreSQL,
 Prometheus collects the numbers, Grafana shows them live on a dashboard, and an
 alert fires when the website goes down. A backup script saves the database and
-can restore it.
+can restore it. Every push to GitHub is automatically tested by a CI pipeline,
+and the project can be deployed to Render's free tier.
 
 Architecture: browser → Flask website → PostgreSQL; Flask → Prometheus → Grafana.
 Run it with one command: `docker compose up -d`, then open http://localhost:5001.
 
 Status: all phases complete and tested (November 2026) — website live, Prometheus
 scraping, Grafana dashboard saved, alert tested, backup and restore proven.
+Guestbook, CI pipeline and Render deploy added afterwards.
+
+Live URL: _coming soon — paste the Render URL here after the first deploy._
 
 ## What it is
 
 - **web** — Flask app. Every refresh adds a visit to the database and shows
   "You are visitor number N". It also exposes `/metrics` for Prometheus.
-- **db** — PostgreSQL 16. Visits are stored here, so the count survives restarts.
+- **guestbook** — visitors can leave their name and a message on the home page
+  (`POST /message`). Messages are saved in PostgreSQL and the 20 most recent
+  are shown on the page. A second Prometheus counter, `app_messages_total`,
+  counts every message saved.
+- **db** — PostgreSQL 16. Visits and messages are stored here, so they survive restarts.
 - **prometheus** — collects the app's numbers every 5 seconds.
 - **grafana** — draws the numbers as live graphs.
 - **node-exporter** — exposes CPU / system numbers for the CPU panel.
@@ -46,6 +56,7 @@ already uses port 5000.
 
 - Open http://localhost:9090 → Status → Targets. Both `web` and `node` should say UP.
 - Search `app_visits_total` and press Execute — you should see your visitor count.
+- Search `app_messages_total` to see how many guestbook messages were saved.
 
 ## Phase 3 — Build the Grafana dashboard (45 min)
 
@@ -92,7 +103,49 @@ docker compose exec -T db psql -U admin myapp -c "TRUNCATE visits RESTART IDENTI
 docker compose exec -T db psql -U admin myapp < backup-YYYY-MM-DD_HH-MM.sql
 ```
 
-Refresh the page and your old visitor count is back.
+Refresh the page and your old visitor count is back. The backup covers the
+guestbook messages too — they are in the same database.
+
+## Guestbook
+
+The home page has a small form: name + message. Submitting it saves the message
+in the `messages` table and takes you back to the home page, where the 20 most
+recent messages are shown newest first. The `app_messages_total` counter in
+`/metrics` goes up by one for every message saved.
+
+## CI pipeline
+
+Every push and pull request to `main` runs the GitHub Actions workflow in
+`.github/workflows/ci.yml` — see the green badge at the top of this README:
+
+1. **test** — installs the requirements, installs pytest, runs `test_app.py`
+   (the database is mocked, so no real database is needed).
+2. **docker** — builds the Docker image from the Dockerfile, so a broken
+   Dockerfile is caught before deploy.
+3. **integration** — starts a real PostgreSQL 16 service, runs the app against
+   it, checks `/` and `/metrics` return 200, and posts a guestbook message.
+
+To run the tests on your own machine:
+
+```bash
+pip install -r requirements.txt pytest
+pytest -v
+```
+
+## Cloud deploy (Render)
+
+`render.yaml` is a Render blueprint: it creates a free web service from the
+Dockerfile and a free PostgreSQL database, and wires the database settings
+into the app automatically. The app listens on the `PORT` Render gives it.
+
+1. Create a free account at https://render.com and connect your GitHub account.
+2. In Render: New → Blueprint, pick this repository.
+3. Render reads `render.yaml` and shows the web service + database. Click Apply.
+4. Wait for the deploy to finish, then open the web service URL Render gives you.
+5. Paste that URL in the "Live URL" line at the top of this README.
+
+Note: Grafana and Prometheus are not part of the Render deploy — they keep
+running in Docker on your Mac. The Render copy is the public website only.
 
 ## Ports
 
@@ -107,21 +160,27 @@ Refresh the page and your old visitor count is back.
 
 - Port already in use → change the left number in the ports mapping in
   `docker-compose.yml`, e.g. `"5001:5000"`.
-- Change the demo database password (`secret123` in `docker-compose.yml`)
-  before sharing the project publicly — it is only a local demo password.
+- Change the demo database password in `docker-compose.yml` before sharing
+  the project publicly — it is only a local demo password. Remember to change
+  it in both places in the file (the web service and the database service),
+  then recreate the database as described in the password-change steps.
 
 ## Demo checklist (presentation day)
 
 - [ ] Start Docker Desktop
 - [ ] `docker compose up -d`
 - [ ] Open the website, refresh it a few times
+- [ ] Leave a guestbook message and watch it appear on the page
 - [ ] Open Grafana, show the dashboard moving
 - [ ] `docker compose stop web` to show the alert firing, then start it again
 
 ## To make this final-year worthy
 
-As it stands this is a strong mini project. For a final-year project, add:
-1. A real app (e.g. a task manager with login) instead of just a counter.
-2. A CI/CD pipeline (GitHub Actions: test → build image → deploy on every push).
-3. Cloud deployment (free tier like Render or Railway) so there is a live link.
+The three upgrades from the original mini project are now done: a real app
+feature (guestbook), a CI/CD pipeline (GitHub Actions), and cloud deploy
+(Render). To go further, add:
+1. Login for the guestbook (only signed-in users can post, and can delete
+   their own messages).
+2. More tests — for example, a test that an empty message is not saved.
+3. A custom domain for the Render link.
 4. Keep the Grafana monitoring + alert — it is the part examiners love most.
