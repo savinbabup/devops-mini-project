@@ -2,6 +2,8 @@
 # The web service is built from the existing Dockerfile, and its database
 # settings come from the PostgreSQL database defined below. Render sets the
 # PORT environment variable itself, and the app listens on it.
+# Last change Nov 23: Prometheus scrape timeout fixed to 10s (must stay
+# below the 15s scrape interval); this edit also re-runs the blueprint sync.
 services:
   - type: web
     name: visitor-counter
