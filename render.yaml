@@ -1,0 +1,31 @@
+# Render blueprint: deploys this project to Render's free tier.
+# The web service is built from the existing Dockerfile, and its database
+# settings come from the PostgreSQL database defined below. Render sets the
+# PORT environment variable itself, and the app listens on it.
+services:
+  - type: web
+    name: visitor-counter
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: visitor-db
+          property: host
+      - key: DB_NAME
+        fromDatabase:
+          name: visitor-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: visitor-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: visitor-db
+          property: password
+
+databases:
+  - name: visitor-db
+    plan: free
