@@ -1,8 +1,17 @@
 # DevOps mini project — visitor counter with Grafana monitoring
 
-Mac-compatible. Built phase by phase on 2026-11-20: a Flask website + PostgreSQL
-database in Docker containers, with Prometheus collecting metrics and Grafana
-showing them live, plus an alert and a backup script. About 3 hours total.
+**By Savin Babu P — B.Tech Computer Science and Technology (DevOps), Presidency University, Bangalore.**
+
+A visitor-counter website running in Docker: every visit is saved in PostgreSQL,
+Prometheus collects the numbers, Grafana shows them live on a dashboard, and an
+alert fires when the website goes down. A backup script saves the database and
+can restore it.
+
+Architecture: browser → Flask website → PostgreSQL; Flask → Prometheus → Grafana.
+Run it with one command: `docker compose up -d`, then open http://localhost:5001.
+
+Status: all phases complete and tested (November 2026) — website live, Prometheus
+scraping, Grafana dashboard saved, alert tested, backup and restore proven.
 
 ## What it is
 
@@ -27,8 +36,11 @@ showing them live, plus an alert and a backup script. About 3 hours total.
 docker compose up --build
 ```
 
-Open http://localhost:5000 and refresh — the visitor number goes up each time.
+Open http://localhost:5001 and refresh — the visitor number goes up each time.
 First run is slow: Docker downloads the images. Just wait.
+
+Note: the website runs on port **5001**, not 5000, because macOS AirPlay Receiver
+already uses port 5000.
 
 ## Phase 2 — Check Prometheus is collecting (15 min)
 
@@ -51,8 +63,8 @@ First run is slow: Docker downloads the images. Just wait.
 
 ## Phase 4 — Add an alert (20 min)
 
-- Open the "App Status" panel → Alert tab → create an alert rule: when the
-  value is below 1 for 1 minute.
+- Alerting → Alert rules → New alert rule: name `app is down`, query
+  `up{job="web"}`, condition "when the value is below 1 for 1 minute".
 - Test it: `docker compose stop web`, wait a minute, watch the alert fire in
   Grafana. Then `docker compose start web` and it goes back to normal.
 
@@ -63,19 +75,30 @@ chmod +x backup.sh
 ./backup.sh
 ```
 
-That saves a `backup-*.sql` file. To prove it works: `docker compose down -v`,
-then `docker compose up -d`, then restore with
-`docker compose exec -T db psql -U admin myapp < backup-YYYY-MM-DD_HH-MM.sql`
-— refresh the page and your old visitor count is back.
+That saves a `backup-*.sql` file. To prove it works, stop the stack and delete
+only the database volume — never `docker compose down -v`, that would also
+delete Grafana and your dashboard:
 
-Write a short README note of your own: what the project does, the architecture
-(web → database, Prometheus → Grafana), and how to run it with one command.
+```bash
+docker compose down
+docker volume rm devops-mini-project_db-data
+docker compose up -d
+```
+
+Then empty the fresh table and restore the backup:
+
+```bash
+docker compose exec -T db psql -U admin myapp -c "TRUNCATE visits RESTART IDENTITY;"
+docker compose exec -T db psql -U admin myapp < backup-YYYY-MM-DD_HH-MM.sql
+```
+
+Refresh the page and your old visitor count is back.
 
 ## Ports
 
 | Service | URL | Login |
 |---|---|---|
-| Website | http://localhost:5000 | — |
+| Website | http://localhost:5001 | — |
 | Prometheus | http://localhost:9090 | — |
 | Grafana | http://localhost:3000 | admin / admin |
 | Node exporter | http://localhost:9100 | — |
