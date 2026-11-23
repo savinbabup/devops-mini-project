@@ -17,7 +17,7 @@ Status: all phases complete and tested (November 2026) — website live, Prometh
 scraping, Grafana dashboard saved, alert tested, backup and restore proven.
 Guestbook, CI pipeline and Render deploy added afterwards.
 
-Live URL: _coming soon — paste the Render URL here after the first deploy._
+Live URL: https://visitor-counter-d2hz.onrender.com
 
 ## What it is
 
