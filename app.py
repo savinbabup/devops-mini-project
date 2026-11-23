@@ -94,11 +94,12 @@ PAGE_CSS = """
 </style>
 """
 
-# Public address of the Grafana service on Render, e.g.
-# https://grafana-xxxx.onrender.com. Set it as the GRAFANA_URL env var on
-# the web service; until it is set, the dashboard section shows a note
-# instead of the embedded dashboard.
-GRAFANA_URL = os.environ.get("GRAFANA_URL", "").strip()
+# Public address of the Grafana service on Render. The GRAFANA_URL env var
+# overrides this when set; otherwise the dashboard below uses the live
+# Grafana service created for this project.
+GRAFANA_URL = os.environ.get(
+    "GRAFANA_URL", "https://grafana-d2h6.onrender.com"
+).strip()
 
 
 @app.route("/")
