@@ -1,0 +1,13 @@
+# Dashboard provider: loads every dashboard JSON from
+# /etc/grafana/dashboards at startup (and picks up changes within 10s).
+apiVersion: 1
+providers:
+  - name: dashboards
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards

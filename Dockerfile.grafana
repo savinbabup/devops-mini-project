@@ -1,0 +1,14 @@
+# Grafana for Render (free tier).
+# Bakes in the provisioning files (datasource + dashboard provider) and the
+# dashboard JSON, so Grafana starts with the "Visitor App Monitoring"
+# dashboard already there. A small start script binds Grafana to Render's
+# $PORT and points its public URL at the address Render gives the service.
+FROM grafana/grafana:latest
+USER root
+COPY provisioning /etc/grafana/provisioning
+COPY dashboards /etc/grafana/dashboards
+COPY start-grafana.sh /start.sh
+RUN chmod +x /start.sh \
+  && chown -R grafana:grafana /etc/grafana/provisioning /etc/grafana/dashboards
+USER grafana
+ENTRYPOINT ["/start.sh"]

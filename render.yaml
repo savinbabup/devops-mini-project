@@ -26,6 +26,51 @@ services:
           name: visitor-db
           property: password
 
+  # Prometheus on Render: scrapes the public web service's /metrics
+  # (see prometheus-render.yml). Built from a small custom Dockerfile
+  # because the stock image cannot read Render's $PORT by itself.
+  - type: web
+    name: prometheus
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.prometheus
+    healthCheckPath: /-/healthy
+
+  # Grafana on Render: serves the "Visitor App Monitoring" dashboard,
+  # provisioned from files in the repo. Anonymous viewers can see it and
+  # it may be embedded in an iframe, so the home page can show it live.
+  # Its datasource (the Prometheus service above) is wired with
+  # fromService, so no address is hardcoded.
+  - type: web
+    name: grafana
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.grafana
+    healthCheckPath: /api/health
+    envVars:
+      - key: GF_AUTH_ANONYMOUS_ENABLED
+        value: "true"
+      - key: GF_AUTH_ANONYMOUS_ORG_ROLE
+        value: Viewer
+      - key: GF_SECURITY_ALLOW_EMBEDDING
+        value: "true"
+      - key: GF_SECURITY_COOKIE_SAMESITE
+        value: none
+      - key: GF_SECURITY_COOKIE_SECURE
+        value: "true"
+      - key: GF_USERS_ALLOW_SIGN_UP
+        value: "false"
+      - key: PROMETHEUS_HOST
+        fromService:
+          type: web
+          name: prometheus
+          property: host
+      - key: PROMETHEUS_PORT
+        fromService:
+          type: web
+          name: prometheus
+          property: port
+
 databases:
   - name: visitor-db
     plan: free

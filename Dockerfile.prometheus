@@ -1,0 +1,14 @@
+# Prometheus for Render (free tier).
+# The stock prom/prometheus image is scratch-based and has no shell, so it
+# cannot read Render's $PORT by itself. This multi-stage build copies the
+# statically-linked prometheus binary into Alpine, where a small start
+# script binds it to 0.0.0.0:$PORT at container start.
+FROM prom/prometheus:latest AS prom
+
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates
+COPY --from=prom /bin/prometheus /bin/prometheus
+COPY prometheus-render.yml /etc/prometheus/prometheus.yml
+COPY start-prometheus.sh /start.sh
+RUN chmod +x /start.sh && mkdir -p /prometheus
+ENTRYPOINT ["/bin/sh", "/start.sh"]

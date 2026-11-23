@@ -87,10 +87,18 @@ PAGE_CSS = """
   .cards b { color: #fff; }
   .cards small { color: #7E93AB; margin-left: 6px; }
   .cards p { margin: 6px 0 0; }
+  iframe { width: 100%; height: 520px; border: 1px solid #2A2E55; border-radius: 16px; background: #121327; }
+  .note { background: #1B1E3A; border: 1px solid #2A2E55; border-radius: 12px; padding: 16px; color: #9FB0C3; }
   footer { margin-top: 40px; color: #7E93AB; font-size: 13px; text-align: center; }
   footer a { color: #4B82C3; }
 </style>
 """
+
+# Public address of the Grafana service on Render, e.g.
+# https://grafana-xxxx.onrender.com. Set it as the GRAFANA_URL env var on
+# the web service; until it is set, the dashboard section shows a note
+# instead of the embedded dashboard.
+GRAFANA_URL = os.environ.get("GRAFANA_URL", "").strip()
 
 
 @app.route("/")
@@ -106,6 +114,18 @@ def home():
         items += (
             f"<li><b>{escape(name)}</b><small>{when}</small>"
             f"<p>{escape(message)}</p></li>"
+        )
+    if GRAFANA_URL:
+        dashboard = (
+            "<h2>Live dashboard</h2>"
+            "<p class='sub'>The Grafana dashboard, live from the cloud — it refreshes every 5 seconds.</p>"
+            f"<iframe src='{escape(GRAFANA_URL)}/d/visitor-app-monitoring/visitor-app-monitoring?orgId=1&amp;refresh=5s&amp;kiosk' "
+            "title='Live Grafana dashboard'></iframe>"
+        )
+    else:
+        dashboard = (
+            "<h2>Live dashboard</h2>"
+            "<p class='note'>The Grafana dashboard will appear here once its public address is connected.</p>"
         )
     return (
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"
@@ -125,6 +145,7 @@ def home():
         "<span class='chip'>Docker</span><span class='chip'>Prometheus</span>"
         "<span class='chip'>Grafana</span>"
         "</div>"
+        + dashboard +
         "<h2>Guestbook</h2>"
         "<p class='sub'>Leave your name and a message — it gets saved in the database.</p>"
         '<form method="post" action="/message">'

@@ -144,8 +144,19 @@ into the app automatically. The app listens on the `PORT` Render gives it.
 4. Wait for the deploy to finish, then open the web service URL Render gives you.
 5. Paste that URL in the "Live URL" line at the top of this README.
 
-Note: Grafana and Prometheus are not part of the Render deploy — they keep
-running in Docker on your Mac. The Render copy is the public website only.
+Grafana and Prometheus also run on Render now, from the same blueprint:
+the `prometheus` service scrapes the live site's `/metrics`, and the
+`grafana` service shows the "Visitor App Monitoring" dashboard, which the
+home page embeds live in an iframe. Grafana lets anyone view it (anonymous
+Viewer access) and allows embedding. The home page reads the dashboard
+address from the `GRAFANA_URL` environment variable on the web service —
+set it to the public Grafana URL from the Render dashboard.
+
+Note: all three free services share the workspace's 750 free instance
+hours per month, and each one sleeps after 15 minutes idle, so the
+embedded dashboard is slow to wake on a cold visit. The "CPU usage %"
+panel shows no data on Render, because there is no node-exporter there —
+that panel only has data in the local Docker Compose setup.
 
 ## Ports
 

@@ -1,0 +1,13 @@
+# Prometheus datasource, provisioned at Grafana startup.
+# The host and port come from the Render Prometheus service via
+# PROMETHEUS_HOST / PROMETHEUS_PORT env vars (render.yaml wires them with
+# fromService), so this file never hardcodes an address.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://${PROMETHEUS_HOST}:${PROMETHEUS_PORT}
+    isDefault: true
+    editable: false

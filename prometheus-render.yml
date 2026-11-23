@@ -1,0 +1,16 @@
+# Prometheus config for the Render copy of the project.
+# Unlike the local docker-compose.yml, there are no Docker Compose
+# hostnames here: Render scrapes the PUBLIC web service metrics endpoint.
+# The web service sleeps after 15 minutes idle on the free tier, so some
+# scrapes will fail while it wakes up — that is expected, Prometheus
+# simply records no data point for those intervals.
+global:
+  scrape_interval: 15s
+  scrape_timeout: 30s
+
+scrape_configs:
+  - job_name: "web"
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["visitor-counter-d2hz.onrender.com"]
